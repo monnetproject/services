@@ -133,6 +133,49 @@ ensure the service is only created when there is at least one satisfying depende
        public MyPOSTagger(@NonEmpty Collection<Tokenizer> tokenizers) { }
     }
 
+### @Factory
+
+This annotation returns a dependency as an _aggregate factory_. Calling a method 
+on this factory results in all known implementations of the class being queried,
+and the first implementation that did not return null or throw an exception being
+returned.
+
+Consider for example we have an interface
+
+    public interface POSTaggerFactory {
+       POSTagger getTagger(Language language);
+    }
+
+And two associated implementations:
+   
+    public class ENPOSTaggerFactory implements POSTaggerFactory {
+       public POSTagger getTagger(Language language) {
+           if(language == ENGLISH) {
+             return new ENPOSTagger();
+           } else {
+             return null;
+           }
+       }
+    }
+
+    public class DEPOSTaggerFactory implements POSTaggerFactory {
+       public POSTagger getTagger(Language language) {
+           if(language == GERMAN) {
+             return new DEPOSTagger();
+           } else {
+             return null;
+           }
+       }
+    }
+
+Then by obtain an `@Factory` reference the call to `getFactory()` will return a 
+result for either English or German. 
+
+Dependencies can be returned as aggregate factories without an OSGi runtime using
+the method `getFactory`
+
+    final POSTaggerFactory posTaggerFactory = Services.getFactory(POSTaggerFactory.class);
+
 ### @Singleton
 
 This annotation means that MFS will only return one instance of the class
