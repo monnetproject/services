@@ -92,7 +92,9 @@ public class InjectableClass<C> {
      * @return true if it is a ServiceCollection or Iterable
      */
     public static boolean isMultiple(Type t) {
-        return t instanceof ParameterizedType && ServiceCollection.class.isAssignableFrom((Class) ((ParameterizedType) t).getRawType()) && !(((ParameterizedType) t).getActualTypeArguments()[0] instanceof Class);
+        return t instanceof ParameterizedType && 
+                ((Class<?>) ((ParameterizedType) t).getRawType()).isAssignableFrom(ServiceCollection.class) && 
+                (((ParameterizedType) t).getActualTypeArguments()[0] instanceof Class);
     }
 
     /**
