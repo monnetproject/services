@@ -1,7 +1,7 @@
 Monnet Framework Services (MFS)
 ===============================
 
-An easy way to do OSGi services.
+*An easy way to do OSGi services*
 
 What is MFS?
 ------------
@@ -106,4 +106,43 @@ All instances of a service may be obtained through the method getAll
 Advanced Features
 -----------------
 
-MFS in addition provides a small number of annotations for enabling 
+MFS in addition provides a small number of annotations for customizing the way 
+that MFS resolves services.
+
+### @Inject
+
+The @Inject annotation can be used to indicate which constructor is to be used for
+dependency injection. This can be useful for integrating MFS with other frameworks
+
+    public class MyPOSTagger implements POSTagger {
+       // Do not use for injection
+       public MyPOSTagger() {}
+
+       // Use for injection
+       @Inject public MyPOSTagger(Tokenizer tokenizer) { }
+    }
+
+This annotation must be used if there are more than one constructor
+
+### @NonEmpty
+
+This annotation when applied to a constructor argument of a `Collection` will 
+ensure the service is only created when there is at least one satisfying dependency
+
+    public class MyPOSTagger implements POSTagger {
+       public MyPOSTagger(@NonEmpty Collection<Tokenizer> tokenizers) { }
+    }
+
+### @Singleton
+
+This annotation means that MFS will only return one instance of the class
+
+    @Singleton public class MyPOSTagger implements POSTagger {
+       public MyPOSTagger(Collection<Tokenizer> tokenizers) { }
+    }
+
+Note MFS does not guarantee that the class will only be constructed once, so this
+should not be used to perform tasks that can only be once (e.g., connecting to a 
+database). This annotation is intended to save on resources by avoiding duplicate
+instances of similar classes. Similarly, if dependent services become unavailable 
+and then new dependencies become available the constructor will be called again.
