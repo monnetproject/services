@@ -60,7 +60,6 @@ public class ServicesTest {
 
     @Test
     public void testOSGi() throws Exception {
-        System.err.println("user dir: " + System.getProperty("user.dir"));
         System.err.println("testOSGi");
         deleteRecursive(new File("felix-cache"));
         final Map<String, String> props = new HashMap<String, String>();
@@ -107,9 +106,10 @@ public class ServicesTest {
     @Test
     public void testOSGiProvide() throws Exception {
         System.err.println("testOSGiProvide");
-        deleteRecursive(new File("felix-cache"));
+        deleteRecursive(new File("felix-cache2"));
         final Map<String, String> props = new HashMap<String, String>();
         props.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "org.osgi.service.log;version=1.3.0");
+        props.put(Constants.FRAMEWORK_STORAGE,"felix-cache2");
         final Framework fw = getFrameworkFactory().newFramework(props);
         fw.init();
         fw.start();
@@ -139,7 +139,7 @@ public class ServicesTest {
             }
         }
         fw.stop();
-        deleteRecursive(new File("felix-cache"));
+        deleteRecursive(new File("felix-cache2"));
         // Expected output:
 //Starting consumer
 //Multiple Dependent hello consumer from OSGi
@@ -185,5 +185,42 @@ public class ServicesTest {
         }
 
         throw new Exception("Could not find framework factory.");
+    }
+    
+    @Test
+    public void testAdvanced() throws Exception {
+        System.setProperty("eu.monnetproject.framework.services.verbose", "true");
+        // Test the advanced features
+        System.err.println("testAdvanced");
+        deleteRecursive(new File("felix-cache3"));
+        final Map<String, String> props = new HashMap<String, String>();
+        props.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "org.osgi.service.log;version=1.3.0");
+        props.put(Constants.FRAMEWORK_STORAGE,"felix-cache3");
+        final Framework fw = getFrameworkFactory().newFramework(props);
+        fw.init();
+        fw.start();
+        final BundleContext fwContext = fw.getBundleContext();
+        final Bundle advancedBundle = startBundle(fwContext, "advanced");
+        
+        final File generatedFile = new File(ARTIFACT);
+        if (!generatedFile.exists()) {
+            System.err.println("Skipping this test as the target jar is not available");
+            return;
+        }
+        final Bundle thisBundle = fwContext.installBundle(generatedFile.toURI().toURL().toString());
+        advancedBundle.start();
+        thisBundle.start();
+        
+        assertNotNull(advancedBundle.getBundleContext().getServiceReference("eu.monnetproject.framework.services.advanced.DepService"));
+        assertNotNull(advancedBundle.getBundleContext().getServiceReference("eu.monnetproject.framework.services.advanced.DepService2"));
+        assertNull(advancedBundle.getBundleContext().getServiceReference("eu.monnetproject.framework.services.advanced.DepServiceUnsatisfiable"));
+        synchronized (this) {
+            try {
+                wait(1000);
+            } catch (InterruptedException x) {
+            }
+        }
+        fw.stop();
+        deleteRecursive(new File("felix-cache3"));
     }
 }

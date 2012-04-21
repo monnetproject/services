@@ -113,6 +113,9 @@ public class OSGiComponent<C> {
     private void setCollArg(int i, ServiceCollectionImpl<?> coll) {
         ServiceReference[] refs = null;
         ServiceCollection[] colls = null;
+        if(verbose) {
+            log("Setting arg " + i + " to " + coll + " isEmpty=" + coll.isEmpty());
+        }
         synchronized (arguments) {
             if (arguments[i] == null && !coll.isEmpty()) {
                 collections[i] = coll;
