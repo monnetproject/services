@@ -177,6 +177,8 @@ public class InjectableClass<C> {
             throw new ServiceLoadException(clazz, x);
         } catch (InvocationTargetException x) {
             throw new ServiceLoadException(clazz, x);
+        } catch (IllegalArgumentException x) {
+            throw new ServiceLoadException(clazz, x);
         }
     }
 

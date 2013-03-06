@@ -28,7 +28,7 @@ import org.osgi.service.log.LogService;
  */
 public class ServicesTest {
 
-    public static final String ARTIFACT = "target/framework.services-1.12.3-SNAPSHOT.jar";
+    public static final String ARTIFACT = "target/framework.services-1.13.3.jar";
 
     public ServicesTest() {
     }
@@ -60,6 +60,7 @@ public class ServicesTest {
 
     @Test
     public void testOSGi() throws Exception {
+        System.err.println("user dir: " + System.getProperty("user.dir"));
         System.err.println("testOSGi");
         deleteRecursive(new File("felix-cache"));
         final Map<String, String> props = new HashMap<String, String>();
@@ -106,10 +107,9 @@ public class ServicesTest {
     @Test
     public void testOSGiProvide() throws Exception {
         System.err.println("testOSGiProvide");
-        deleteRecursive(new File("felix-cache2"));
+        deleteRecursive(new File("felix-cache"));
         final Map<String, String> props = new HashMap<String, String>();
         props.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "org.osgi.service.log;version=1.3.0");
-        props.put(Constants.FRAMEWORK_STORAGE,"felix-cache2");
         final Framework fw = getFrameworkFactory().newFramework(props);
         fw.init();
         fw.start();
@@ -139,7 +139,7 @@ public class ServicesTest {
             }
         }
         fw.stop();
-        deleteRecursive(new File("felix-cache2"));
+        deleteRecursive(new File("felix-cache"));
         // Expected output:
 //Starting consumer
 //Multiple Dependent hello consumer from OSGi
@@ -186,7 +186,7 @@ public class ServicesTest {
 
         throw new Exception("Could not find framework factory.");
     }
-    
+
     @Test
     public void testAdvanced() throws Exception {
         System.setProperty("eu.monnetproject.framework.services.verbose", "true");

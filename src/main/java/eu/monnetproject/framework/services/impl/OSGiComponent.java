@@ -90,6 +90,7 @@ public class OSGiComponent<C> {
                         trackers[i] = new ServiceTracker(context, depClazz.getName(), new InjectiveTracker(serviceCollectionImpl));
                         collections[i] = serviceCollectionImpl;
                         trackers[i].open();
+                        satisfied++;
                     }
                 } else {
                     final Class<?> depClazz = InjectableClass.getRealType(t);
@@ -113,16 +114,15 @@ public class OSGiComponent<C> {
     private void setCollArg(int i, ServiceCollectionImpl<?> coll) {
         ServiceReference[] refs = null;
         ServiceCollection[] colls = null;
-        if(verbose) {
-            log("Setting arg " + i + " to " + coll + " isEmpty=" + coll.isEmpty());
-        }
         synchronized (arguments) {
             if (arguments[i] == null && !coll.isEmpty()) {
                 collections[i] = coll;
-                satisfied++;
+                if(clazz.isNonEmpty()[i])
+                    satisfied++;
             } else if (arguments[i] != null && coll.isEmpty()) {
                 collections[i] = null;
-                satisfied--;
+                if(clazz.isNonEmpty()[i])
+                    satisfied--;
             } else {
                 return;
             }
@@ -141,6 +141,9 @@ public class OSGiComponent<C> {
     private void setArg(int i, ServiceReference sr) {
         ServiceReference[] refs = null;
         ServiceCollection[] colls = null;
+        if(verbose) {
+            System.err.println("Adding " + sr.getProperty("component.name") + " to " + clazz.getClassName() + " (" + satisfied + "/" + collections.length + ")");
+        }
         // First we set the arguments object
         synchronized (arguments) {
             // We are removing an argument

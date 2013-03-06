@@ -47,6 +47,7 @@ public class StdResolver {
     public final static String PATH_PREFIX = System.getProperty("eu.monnetproject.framework.services.path", "META-INF/components/");
     public final static String JSL_PATH_PREFIX = System.getProperty("eu.monnetproject.framework.services.jslpath", "META-INF/services/");
     public final static boolean noOSGi = Boolean.parseBoolean(System.getProperty("eu.monnetproject.framework.services.osgi", "false"));
+    private static final boolean verbose = Boolean.parseBoolean(System.getProperty("eu.monnetproject.framework.services.verbose", "false"));
 
     private StdResolver() {
     }
@@ -103,6 +104,9 @@ public class StdResolver {
         if (lastException != null) {
             throw lastException;
         } else {
+            if (verbose) {
+                System.err.println("No candidate service for " + serviceClass.getName());
+            }
             throw new ServiceLoadException(serviceClass);
         }
     }
@@ -119,20 +123,32 @@ public class StdResolver {
                     Class<S> c = bundle == null ? (Class<S>) Thread.currentThread().getContextClassLoader().loadClass(ss[0])
                             : bundle.loadClass(ss[0]);
                     try {
+                        if (verbose) {
+                            System.err.println("Binding " + ss[0] + " as " + serviceClass.getName());
+                        }
                         return resolveSingle(serviceClass, c, independent);
                     } catch (ServiceLoadException x) {
                         lastException = x;
                     }
                 } catch (ClassNotFoundException x) {
+                    if (verbose) {
+                        System.err.println("Failed to load class " + ss[0] + ": " + x.getMessage());
+                    }
                     throw new ServiceLoadException(serviceClass, x);
                 }
             }
             if (lastException != null) {
                 throw lastException;
             } else {
+                if (verbose) {
+                    System.err.println("Empty service descriptor @ " + url);
+                }
                 throw new ServiceLoadException(serviceClass, "Empty service declaration @ " + url);
             }
         } catch (IOException ex) {
+            if (verbose) {
+                System.err.println("Error reading service descriptor " + url.toString() + ": " + ex.getMessage());
+            }
             throw new ServiceLoadException(serviceClass, ex);
         }
     }
@@ -145,16 +161,28 @@ public class StdResolver {
             ServiceLoadException lastException = null;
             while ((s = reader.readLine()) != null) {
                 final String[] ss = s.split(";");
+                if (ss[0].matches("\\s*")) {
+                    continue;
+                }
                 try {
                     @SuppressWarnings("unchecked")
                     Class<S> c = bundle == null ? (Class<S>) Thread.currentThread().getContextClassLoader().loadClass(ss[0])
                             : bundle.loadClass(ss[0]);
                     try {
+                        if (verbose) {
+                            System.err.println("Binding " + ss[0] + " as " + serviceClass.getName());
+                        }
                         services.add(resolveSingle(serviceClass, c, independent));
                     } catch (ServiceLoadException x) {
+                        if (verbose) {
+                            System.err.println("Service not loaded as " + x.getClass().getName() + ": " + x.getMessage());
+                        }
                         lastException = x;
                     }
                 } catch (ClassNotFoundException x) {
+                    if (verbose) {
+                        System.err.println("Failed to load class " + ss[0] + ": " + x.getMessage());
+                    }
                     throw new ServiceLoadException(serviceClass, x);
                 }
             }
@@ -166,6 +194,9 @@ public class StdResolver {
                 return new LinkedList<S>();
             }
         } catch (IOException ex) {
+            if (verbose) {
+                System.err.println("Error reading service descriptor " + url.toString() + ": " + ex.getMessage());
+            }
             throw new ServiceLoadException(serviceClass, ex);
         }
     }
@@ -174,17 +205,23 @@ public class StdResolver {
 
         final InjectableClass<T> injectableClass = new InjectableClass<T>(implClass);
         if (independent && injectableClass.dependencies().length != 0) {
+            if (verbose) {
+                System.err.println(implClass.getName() + " does not have a single public no-args constructor");
+            }
             throw new ServiceLoadException(implClass, "Class does not have a single public no-args constructor");
         }
         Object[] arguments = new Object[injectableClass.dependencies().length];
         int i = 0;
         for (Type type : injectableClass.dependencies()) {
             //if (type instanceof ParameterizedType && ((Class<?>) ((ParameterizedType) type).getRawType()).isAssignableFrom(ServiceCollection.class)) {
-            if(InjectableClass.isMultiple(type)) {
+            if (InjectableClass.isMultiple(type)) {
                 Class<?> clazz = (Class<?>) ((ParameterizedType) type).getActualTypeArguments()[0];
                 try {
-                    arguments[i] = resolveExtant(clazz,injectableClass.isNonEmpty()[i]);
+                    arguments[i] = resolveExtant(clazz, injectableClass.isNonEmpty()[i]);
                 } catch (ServiceLoadException x) {
+                    if (verbose) {
+                        System.err.println("Failed to bind argument " + i + " of " + implClass.getName());
+                    }
                     throw new ServiceLoadException(x, implClass);
                 }
             } else {
@@ -197,6 +234,10 @@ public class StdResolver {
                     }
                     arguments[i] = resolveImmediate(clazz);
                 } catch (ServiceLoadException x) {
+
+                    if (verbose) {
+                        System.err.println("Failed to bind argument " + i + " of " + implClass.getName());
+                    }
                     throw new ServiceLoadException(x, implClass);
                 }
             }
@@ -206,9 +247,9 @@ public class StdResolver {
     }
 
     public static <S> ServiceCollection<S> resolveExtant(Class<S> serviceClass) {
-        return resolveExtant(serviceClass,false);
+        return resolveExtant(serviceClass, false);
     }
-    
+
     public static <S> ServiceCollection<S> resolveExtant(Class<S> serviceClass, boolean nonEmpty) {
         final ServiceCollectionImpl<S> services = new ServiceCollectionImpl<S>();
         ServiceLoadException lastException = null;
@@ -263,7 +304,10 @@ public class StdResolver {
         } else if (lastException != null) {
             throw lastException;
         } else {
-            throw new ServiceLoadException(serviceClass,"Could not load non-empty list of services");
+            if (verbose) {
+                System.err.println("Could not load non-empty list of services for " + serviceClass);
+            }
+            throw new ServiceLoadException(serviceClass, "Could not load non-empty list of services");
         }
     }
 
