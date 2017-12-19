@@ -5,7 +5,7 @@
 
     <groupId>eu.monnetproject</groupId>
     <artifactId>framework.services</artifactId>
-    <version>1.12.3-SNAPSHOT</version>
+    <version>1.13.3</version>
     <packaging>bundle</packaging>
 
     <name>eu.monnetproject.framework.services OSGi Bundle</name>
